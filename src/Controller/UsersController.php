@@ -13,15 +13,19 @@ use Symfony\Component\Routing\Annotation\Route;
 class UsersController extends AbstractController
 {
     #[Route('/api/signup',methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $hasher): JsonResponse
+    public function create(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $hashed): JsonResponse
     {
-        $username = $request->request->get("username");
-        $password = $request->request->get("password");
-        $email = $request->request->get("email");
+        $decoded = json_decode($request->getContent());
+
+        $username = $decoded->username;
+        $password = $decoded->password;
+        $email = $decoded->email;
 
         $user = new User();
-        $hashedPassword = $hasher->hashPassword($user,$password);
-        $user->setPassword($hashedPassword)->setUsername($username)->setSalt("123")->setEmail($email);
+        $hashedPassword = $hashed->hashPassword($user, $password);
+        $user->setPassword($hashedPassword)
+            ->setUsername($username)
+            ->setEmail($email);
 
         $entityManager->persist($user);
         $entityManager->flush();
